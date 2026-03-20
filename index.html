@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mega Star Sports - Live Picker</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #0b132b;
+        color: white;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      .winner-box {
+        background: #1c2541;
+        border: 5px solid #ffbc42;
+        border-radius: 15px;
+        padding: 40px;
+        width: 90%;
+        max-width: 900px;
+        margin-bottom: 40px;
+        box-shadow: 0 0 30px rgba(255, 188, 66, 0.4);
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #winnerText {
+        font-size: 80px;
+        font-weight: bold;
+        color: #ffbc42;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 15px;
+        width: 95%;
+        max-width: 1200px;
+      }
+      .country-card {
+        background-color: #3a506b;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 22px;
+        font-weight: bold;
+        color: #fff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s;
+        border-left: 5px solid #6fffe9;
+      }
+      .shuffling {
+        color: #fff !important;
+        font-size: 60px !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="winner-box">
+      <h1 id="winnerText">READY TO PLAY!</h1>
+    </div>
+
+    <h2
+      style="
+        color: #6fffe9;
+        margin-bottom: 25px;
+        font-size: 30px;
+        letter-spacing: 1px;
+      "
+    >
+      REMAINING COUNTRIES
+    </h2>
+    <div class="grid-container" id="countryGrid"></div>
+
+    <script>
+      // === உங்களது FIREBASE CONFIG-ஐ இங்கே பேஸ்ட் செய்யவும் ===
+      const firebaseConfig = {
+        apiKey: "AIzaSyCh8J0jMnb10oW3Rv_fXdEIx1SM4yVH8fQ",
+        authDomain: "megastarsports-8c464.firebaseapp.com",
+        databaseURL: "https://megastarsports-8c464-default-rtdb.firebaseio.com",
+        projectId: "megastarsports-8c464",
+        storageBucket: "megastarsports-8c464.firebasestorage.app",
+        messagingSenderId: "225725348192",
+        appId: "1:225725348192:web:aad2fef767b240f6dac605",
+      };
+      // ==========================================================
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+      let lastTrigger = 0;
+
+      db.ref("gameState").on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Update Grid
+        const grid = document.getElementById("countryGrid");
+        grid.innerHTML = "";
+        if (data.remaining) {
+          data.remaining.forEach((country) => {
+            const div = document.createElement("div");
+            div.className = "country-card";
+            div.innerText = country;
+            grid.appendChild(div);
+          });
+        }
+
+        // Check for new pick
+        if (data.triggerAnimation && data.triggerAnimation !== lastTrigger) {
+          lastTrigger = data.triggerAnimation;
+          const winnerTextEl = document.getElementById("winnerText");
+
+          if (data.winner === "") {
+            winnerTextEl.innerText = "READY TO PLAY!";
+            winnerTextEl.classList.remove("shuffling");
+          } else {
+            // Start Animation
+            let shuffles = 0;
+            winnerTextEl.classList.add("shuffling");
+
+            const shuffleInterval = setInterval(() => {
+              const rand =
+                data.remaining && data.remaining.length > 0
+                  ? data.remaining[
+                      Math.floor(Math.random() * data.remaining.length)
+                    ]
+                  : "SHUFFLING...";
+              winnerTextEl.innerText = rand;
+              shuffles++;
+
+              // Stop after ~1.5 seconds (15 frames)
+              if (shuffles > 15) {
+                clearInterval(shuffleInterval);
+                winnerTextEl.innerText = data.winner;
+                winnerTextEl.classList.remove("shuffling");
+              }
+            }, 100);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
