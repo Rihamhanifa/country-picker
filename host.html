@@ -1,107 +1,62 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mega Star Sports - Host Control</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega Star Sports - Live Picker</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        background-color: #f4f4f4;
-        padding: 20px;
-      }
-      .card {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        max-width: 400px;
-        margin: auto;
-      }
-      button {
-        padding: 15px 20px;
-        font-size: 18px;
-        font-weight: bold;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin: 10px;
-        width: 90%;
-        transition: 0.3s;
-      }
-      button:active {
-        transform: scale(0.95);
-      }
-      input {
-        padding: 15px;
-        font-size: 16px;
-        width: 80%;
-        margin-bottom: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        text-align: center;
-      }
-      #loginBtn {
-        background-color: #007bff;
-        color: white;
-      }
-      #pickBtn {
-        background-color: #28a745;
-        color: white;
-      }
-      #resetBtn {
-        background-color: #dc3545;
-        color: white;
-      }
-      #controlPanel {
-        display: none;
-      }
+        body { font-family: 'Arial', sans-serif; background-color: #0b132b; color: white; text-align: center; margin: 0; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden;}
+        
+        .winner-box { background: #1c2541; border: 5px solid #ffbc42; border-radius: 15px; padding: 40px; width: 90%; max-width: 900px; margin-bottom: 30px; box-shadow: 0 0 30px rgba(255, 188, 66, 0.4); min-height: 120px; display: flex; align-items: center; justify-content: center;}
+        
+        #winnerText { font-size: 80px; font-weight: bold; color: #ffbc42; margin: 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); word-wrap: break-word;}
+        
+        h2.title-text { color: #6fffe9; margin-bottom: 25px; font-size: 30px; letter-spacing: 1px; }
+        
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width: 100%; max-width: 1200px; }
+        
+        .country-card { background-color: #3a506b; padding: 15px; border-radius: 8px; font-size: 22px; font-weight: bold; color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.2s; border-left: 5px solid #6fffe9;}
+        
+        .shuffling { color: #fff !important; font-size: 60px !important; }
 
-      /* புதிதாக சேர்க்கப்பட்ட டிசைன் */
-      #lastPickedText {
-        color: #d9534f;
-        background: #ffeeba;
-        padding: 15px;
-        border-radius: 8px;
-        display: none;
-        font-size: 24px;
-        border: 2px dashed #d9534f;
-        margin-bottom: 20px;
-      }
+        /* =========================================
+           MOBILE RESPONSIVE CSS (புதிதாக சேர்த்தது) 
+           ========================================= */
+        @media (max-width: 768px) {
+            .winner-box { padding: 20px; border-width: 3px; min-height: 80px; margin-bottom: 20px;}
+            #winnerText { font-size: 40px; }
+            .shuffling { font-size: 35px !important; }
+            h2.title-text { font-size: 22px; margin-bottom: 15px;}
+            .grid-container { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+            .country-card { font-size: 16px; padding: 10px; border-left-width: 4px;}
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .winner-box { padding: 15px; min-height: 60px; margin-bottom: 15px;}
+            #winnerText { font-size: 30px; }
+            .shuffling { font-size: 25px !important; }
+            h2.title-text { font-size: 18px; margin-bottom: 10px;}
+            .grid-container { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+            .country-card { font-size: 14px; padding: 8px; border-left-width: 3px;}
+        }
     </style>
-  </head>
-  <body>
-    <div class="card" id="loginScreen">
-      <h2>Host Login 🔒</h2>
-      <p>Please enter the secret passcode.</p>
-      <input type="password" id="passcodeInput" placeholder="Enter Passcode" />
-      <button id="loginBtn" onclick="checkLogin()">Login</button>
-      <p id="errorMsg" style="color: red; display: none; margin-top: 10px">
-        Wrong Passcode! Try again.
-      </p>
+</head>
+<body>
+
+    <div class="winner-box">
+        <h1 id="winnerText">READY TO PLAY!</h1>
     </div>
 
-    <div class="card" id="controlPanel">
-      <h2>Host Control Panel 🎛️</h2>
-      <h3 id="statusText">Remaining: Loading...</h3>
-
-      <h2 id="lastPickedText">🎯 Picked: -</h2>
-
-      <button id="pickBtn" onclick="pickCountry()">
-        🎲 Pick Random Country
-      </button>
-      <br /><br />
-      <button id="resetBtn" onclick="resetGame()">
-        🔄 Reset Game (25 Countries)
-      </button>
-    </div>
+    <h2 class="title-text">REMAINING COUNTRIES</h2>
+    <div class="grid-container" id="countryGrid">
+        </div>
 
     <script>
-      // === உங்களது FIREBASE CONFIG-ஐ இங்கே பேஸ்ட் செய்யவும் ===
-      const firebaseConfig = {
+        // === உங்களது FIREBASE CONFIG-ஐ இங்கே பேஸ்ட் செய்யவும் ===
+       const firebaseConfig = {
         apiKey: "AIzaSyCh8J0jMnb10oW3Rv_fXdEIx1SM4yVH8fQ",
         authDomain: "megastarsports-8c464.firebaseapp.com",
         databaseURL: "https://megastarsports-8c464-default-rtdb.firebaseio.com",
@@ -110,99 +65,58 @@
         messagingSenderId: "225725348192",
         appId: "1:225725348192:web:aad2fef767b240f6dac605",
       };
-      // ==========================================================
+        // ==========================================================
 
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.database();
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let lastTrigger = 0;
 
-      const allCountries = [
-        "Saudi Arabia",
-        "Dubai",
-        "Qatar",
-        "Kuwait",
-        "Oman",
-        "Maldives",
-        "Australia",
-        "Canada",
-        "Iraq",
-        "China",
-        "Yemen",
-        "Turkey",
-        "Egypt",
-        "Iran",
-        "Syria",
-        "Sri Lanka",
-        "India",
-        "Pakistan",
-        "Bangladesh",
-        "Malaysia",
-        "Singapore",
-        "Japan",
-        "France",
-        "Germany",
-        "America",
-      ];
-      let currentRemaining = [];
+        db.ref('gameState').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-      function checkLogin() {
-        const pass = document.getElementById("passcodeInput").value;
-        if (pass === "mega2026") {
-          document.getElementById("loginScreen").style.display = "none";
-          document.getElementById("controlPanel").style.display = "block";
-        } else {
-          document.getElementById("errorMsg").style.display = "block";
-          document.getElementById("passcodeInput").value = "";
-        }
-      }
+            // Update Grid
+            const grid = document.getElementById('countryGrid');
+            grid.innerHTML = "";
+            if(data.remaining) {
+                data.remaining.forEach(country => {
+                    const div = document.createElement('div');
+                    div.className = 'country-card';
+                    div.innerText = country;
+                    grid.appendChild(div);
+                });
+            }
 
-      db.ref("gameState").on("value", (snapshot) => {
-        const data = snapshot.val();
-
-        // மிதமுள்ள நாடுகளின் எண்ணிக்கை
-        if (data && data.remaining) {
-          currentRemaining = data.remaining;
-          document.getElementById("statusText").innerText =
-            `Remaining: ${currentRemaining.length} / 25`;
-        } else {
-          document.getElementById("statusText").innerText =
-            "Click Reset to Start!";
-        }
-
-        // Host-க்கு ரிசல்ட்டைக் காட்டும் புதிய கோட்
-        const pickedEl = document.getElementById("lastPickedText");
-        if (data && data.winner) {
-          pickedEl.style.display = "block";
-          pickedEl.innerText = `🎯 Picked: ${data.winner}`;
-        } else {
-          pickedEl.style.display = "none";
-        }
-      });
-
-      function resetGame() {
-        if (confirm("Are you sure? All 25 countries will be loaded back.")) {
-          db.ref("gameState").set({
-            remaining: allCountries,
-            winner: "",
-            triggerAnimation: Date.now(),
-          });
-        }
-      }
-
-      function pickCountry() {
-        if (currentRemaining.length === 0) {
-          alert("Game Over! No countries left.");
-          return;
-        }
-        const randomIndex = Math.floor(Math.random() * currentRemaining.length);
-        const pickedCountry = currentRemaining[randomIndex];
-        currentRemaining.splice(randomIndex, 1);
-
-        db.ref("gameState").set({
-          remaining: currentRemaining,
-          winner: pickedCountry,
-          triggerAnimation: Date.now(),
+            // Check for new pick
+            if (data.triggerAnimation && data.triggerAnimation !== lastTrigger) {
+                lastTrigger = data.triggerAnimation;
+                const winnerTextEl = document.getElementById('winnerText');
+                
+                if (data.winner === "") {
+                    winnerTextEl.innerText = "READY TO PLAY!";
+                    winnerTextEl.classList.remove('shuffling');
+                } else {
+                    // Start Animation
+                    let shuffles = 0;
+                    winnerTextEl.classList.add('shuffling');
+                    
+                    const shuffleInterval = setInterval(() => {
+                        const rand = data.remaining && data.remaining.length > 0 
+                            ? data.remaining[Math.floor(Math.random() * data.remaining.length)] 
+                            : "SHUFFLING...";
+                        winnerTextEl.innerText = rand;
+                        shuffles++;
+                        
+                        // Stop after ~1.5 seconds (15 frames)
+                        if (shuffles > 15) {
+                            clearInterval(shuffleInterval);
+                            winnerTextEl.innerText = data.winner;
+                            winnerTextEl.classList.remove('shuffling');
+                        }
+                    }, 100);
+                }
+            }
         });
-      }
     </script>
-  </body>
+</body>
 </html>
